@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f6feb">
+<title>База наладчика</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--text:#1b1f24;--muted:#667085;--accent:#1f6feb;--line:#e1e5ea;--danger:#d92d20;--chip:#e8f0fe}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--card:#1a1f27;--text:#e8ecf1;--muted:#98a2b3;--accent:#5b9bff;--line:#2a313c;--danger:#ff6b60;--chip:#22304a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,Roboto,sans-serif;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top))}
+.top{display:flex;gap:6px;align-items:center}
+h1{font-size:18px;margin:0 0 8px}
+input,textarea{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+textarea{min-height:64px;resize:vertical}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;cursor:pointer}
+button.sec{background:var(--chip);color:var(--accent)}
+button.danger{background:transparent;color:var(--danger)}
+button.ghost{background:transparent;color:var(--accent);padding:6px 8px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}
+.chip{flex:none;background:var(--chip);color:var(--accent);padding:6px 12px;border-radius:99px;font-size:14px}
+.chip.on{background:var(--accent);color:#fff}
+main{padding:10px 12px;max-width:760px;margin:auto}
+details.ln{margin-bottom:10px}
+details.ln>summary{font-weight:700;font-size:18px;padding:10px 4px;cursor:pointer}
+details.st{margin:0 0 8px 6px;border-left:3px solid var(--accent);padding-left:10px}
+details.st>summary{font-weight:600;padding:6px 0;cursor:pointer}
+.cnt{color:var(--muted);font-weight:400;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.tag{display:inline-block;background:var(--chip);color:var(--accent);border-radius:6px;padding:1px 8px;font-size:13px;margin-bottom:6px}
+.row{margin:4px 0}.row b{color:var(--muted);font-weight:600;font-size:13px;display:block}
+.act{display:flex;justify-content:flex-end;gap:4px;margin-top:6px}
+.fab{position:fixed;right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;font-size:32px;padding:0;box-shadow:0 4px 14px #0004}
+dialog{width:min(560px,96vw);border:0;border-radius:16px;padding:16px;background:var(--card);color:var(--text);max-height:94vh}
+dialog::backdrop{background:#0008}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.ph{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.ph .t{position:relative}
+.ph img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;cursor:pointer}
+.ph .x{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;padding:0;background:var(--danger);font-size:14px;line-height:24px}
+#viewer{padding:6px;background:#000;width:96vw}
+#viewer img{width:100%;max-height:86vh;object-fit:contain;display:block}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;z-index:99;max-width:90vw;display:none;font-size:14px}
+#warn{background:#fff3cd;color:#664d03;padding:8px 12px;font-size:13px;display:none}
+/* выпадающие списки */
+.cb{position:relative}
+.cb .has-dd{padding-right:36px}
+.cb .dd-btn{position:absolute;top:4px;right:4px;width:30px;height:32px;padding:0;background:transparent;color:var(--accent);font-size:16px}
+.dd{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;max-height:220px;overflow-y:auto;background:var(--card);border:1px solid var(--accent);border-radius:10px;box-shadow:0 6px 18px #0004;margin-top:2px}
+.dd .opt{padding:10px 12px;border-bottom:1px solid var(--line);font-size:15px;cursor:pointer}
+.dd .opt:last-child{border-bottom:0}
+.dd .opt:hover,.dd .opt:active{background:var(--chip)}
+.dd .none{color:var(--muted);font-size:13px;cursor:default}
+/* выпуск */
+#prod{width:min(640px,98vw)}
+.pr{border:1px solid var(--line);border-radius:12px;padding:8px;margin:8px 0;background:var(--bg)}
+.pr1{display:flex;gap:6px;align-items:center}
+.pr1 input[type=time]{flex:1;min-width:0}
+.pr1 input[type=checkbox]{width:22px;height:22px;flex:none}
+.pr2{display:flex;gap:8px;align-items:center;margin-top:6px}
+.pr2 input{flex:1;min-width:0}
+.pr2 .lb{font-size:13px;color:var(--muted);flex:none}
+.cum{flex:none;font-size:14px;color:var(--muted);min-width:90px;text-align:right}
+.cum b{color:var(--text);font-size:16px}
+.x2{background:transparent;color:var(--danger);padding:6px 10px;font-size:20px}
+.tot{display:flex;justify-content:space-between;align-items:center;background:var(--chip);color:var(--accent);border-radius:12px;padding:12px;margin-top:10px;font-weight:700}
+.tot span:last-child{font-size:22px}
+.gen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.sw{display:flex;align-items:center;gap:8px;margin:8px 0}
+.sw input{width:22px;height:22px;flex:none}
+.sw label{margin:0;font-size:15px;color:var(--text)}
+.tabs{display:flex;gap:6px;margin-top:8px}
+.tabs button{flex:1;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ntitle{font-weight:700;font-size:16px;margin-bottom:4px}
+.ntext a{color:var(--accent);text-decoration:underline;white-space:nowrap}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><h1 style="flex:1">🔧 База наладчика</h1><button class="sec" id="prodBtn" aria-label="Выпуск">📊</button><button class="sec" id="setBtn" aria-label="Настройки">⚙</button><button class="sec" id="menuBtn" aria-label="Меню">⋯</button></div>
+  <div class="tabs"><button id="tabKb" class="on" type="button">🔧 Неисправности</button><button id="tabInfo" type="button">📒 Справочник</button></div>
+  <input id="q" type="search" placeholder="Поиск: симптом, станция, робот, решение…" style="margin-top:8px">
+  <div class="chips" id="chips"></div>
+</header>
+<div id="warn">⚠ Браузер не даёт сохранять данные на устройстве. Записи пропадут при закрытии. Установите приложение (APK) или откройте файл в Chrome.</div>
+<main id="list"></main>
+<button class="fab" id="add" aria-label="Добавить">+</button>
+<div id="toast"></div>
+
+<dialog id="form">
+  <div>
+    <strong id="ft">Новая запись</strong>
+    <label>Быстрый ввод (через « - »): линия станция робот - симптом - причина - решение</label>
+    <textarea id="quick" placeholder="UB1 010 R3G - не наносит клей - ошибка клеевой станции - сброс ошибки на ПЛК"></textarea>
+    <button type="button" class="sec" id="parse" style="margin-top:6px">Разобрать ↓</button>
+    <div class="g3">
+      <div><label>Линия</label><input id="line" autocomplete="off" autocapitalize="characters"></div>
+      <div><label>Станция</label><input id="station" autocomplete="off"></div>
+      <div><label>Оборудование</label><input id="equip" autocomplete="off"></div>
+    </div>
+    <label>Симптом / причина остановки</label><textarea id="symptom"></textarea>
+    <label>Причина</label><textarea id="cause"></textarea>
+    <label>Решение</label><textarea id="solution"></textarea>
+    <label>Комментарии</label><textarea id="comment" placeholder="Что важно помнить, нюансы, кого звать…"></textarea>
+    <label>Фото</label>
+    <div class="ph" id="formPhotos"></div>
+    <button type="button" class="sec" id="addPhoto">📷 Добавить фото</button>
+    <input type="file" id="photoInput" accept="image/*" multiple hidden>
+    <div class="btns">
+      <button type="button" class="sec" id="cancel">Отмена</button>
+      <button type="button" id="save">Сохранить</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="note">
+  <div>
+    <strong id="nt">Новая заметка</strong>
+    <label>Категория</label><input id="ncat" autocomplete="off" placeholder="Телефоны, Графики смен…">
+    <label>Заголовок</label><input id="ntitle" autocomplete="off" placeholder="Например: Дежурный электрик / График на октябрь">
+    <label>Текст</label><textarea id="ntext" style="min-height:140px" placeholder="Номера телефонов, график, инструкция, пароль от шкафа…"></textarea>
+    <div class="hint">Номера телефонов станут нажимаемыми: тап открывает набор номера.</div>
+    <label>Фото</label>
+    <div class="ph" id="nPhotos"></div>
+    <button type="button" class="sec" id="nAddPhoto">📷 Добавить фото</button>
+    <div class="btns"><button type="button" class="sec" id="nCancel">Отмена</button><button type="button" id="nSave">Сохранить</button></div>
+  </div>
+</dialog>
+
+<dialog id="settings">
+  <strong>⚙ Настройки: списки для выбора</strong>
+  <p class="hint">Впишите заранее — по одному значению в строке. Они появятся в выпадающих списках при добавлении записи. Уже введённые в записях значения подставляются сами.</p>
+  <div id="setBody"></div>
+  <div class="btns"><button type="button" class="sec" id="setCancel">Отмена</button><button type="button" id="setSave">Сохранить</button></div>
+</dialog>
+
+<dialog id="prod">
+  <div style="display:flex;justify-content:space-between;align-items:center"><strong>📊 Выпуск за смену</strong><button class="sec" id="prodClose">Закрыть</button></div>
+  <label>Дата начала смены</label>
+  <input type="date" id="pDate">
+  <div class="sw"><input type="checkbox" id="pEn"><label for="pEn">Оповещать до конца периода</label></div>
+  <div class="hint" id="pNotif"></div>
+  <button type="button" class="sec" id="pTest" style="margin-top:6px">🔔 Проверить уведомление</button>
+  <div class="hint" style="margin-top:10px">Оповещать за:</div>
+  <div class="chips" id="pLeads"></div>
+  <div id="pRows"></div>
+  <div class="btns" style="justify-content:flex-start">
+    <button type="button" id="pAdd">+ Период</button>
+    <button type="button" class="sec" id="pShare">📤 Отправить диспетчеру</button>
+  </div>
+  <div class="tot"><span>Итого за смену</span><span id="pTotal">0</span></div>
+  <div class="hint" id="pSel" style="margin-top:8px"></div>
+  <details style="margin-top:14px"><summary style="cursor:pointer;color:var(--accent)">Быстро создать периоды</summary>
+    <div class="gen">
+      <div><label>Начало</label><input type="time" id="gStart" value="06:00"></div>
+      <div><label>Длина, мин</label><input type="number" id="gLen" value="60" min="5" inputmode="numeric"></div>
+      <div><label>Количество</label><input type="number" id="gCnt" value="8" min="1" max="48" inputmode="numeric"></div>
+    </div>
+    <div class="btns" style="justify-content:flex-start"><button type="button" class="sec" id="gMake">Создать</button></div>
+  </details>
+  <div class="btns" style="justify-content:space-between;margin-top:18px">
+    <button type="button" class="danger" id="pNew">Новая смена (очистить количества)</button>
+  </div>
+</dialog>
+
+<dialog id="menu">
+  <strong>Данные</strong>
+  <div class="btns" style="justify-content:flex-start;flex-direction:column;align-items:stretch">
+    <button class="sec" id="expJson">⬇ Резервная копия (JSON, с фото и настройками)</button>
+    <button class="sec" id="expCsv">⬇ Выгрузить в CSV (Excel, без фото)</button>
+    <button class="sec" id="impBtn">⬆ Загрузить резервную копию</button>
+    <input type="file" id="impFile" accept=".json,application/json" hidden>
+    <button class="sec" id="closeMenu">Закрыть</button>
+  </div>
+  <p class="hint">Данные хранятся только на этом телефоне. Делайте резервную копию время от времени.</p>
+</dialog>
+
+<dialog id="ask"><div id="askText" style="margin-bottom:6px"></div>
+  <div class="btns"><button class="sec" id="askNo">Отмена</button><button id="askYes" style="background:var(--danger)">Удалить</button></div></dialog>
+<dialog id="alertDlg"><strong>🔔 Оповещение</strong><div id="alertText" style="margin:10px 0;white-space:pre-line"></div>
+  <div class="btns"><button id="alertOk">ОК</button></div></dialog>
+<dialog id="viewer"><img id="vimg" alt=""></dialog>
+
+<script>
+const OLDKEY='nalad_kb_v1',MIN=60000;
+/* Мост к нативному коду: в APK это AndroidBridge (или AndroidInterface — принимаем оба имени) */
+if(!window.AndroidBridge&&window.AndroidInterface)window.AndroidBridge=window.AndroidInterface;
+const isNative=()=>!!(window.AndroidBridge&&window.AndroidBridge.scheduleAlerts);
+const LISTS=[['line','Линии'],['station','Станции'],['equip','Оборудование (роботы и т.д.)'],['symptom','Симптомы / причины остановки'],['cause','Причины'],['solution','Решения'],['ncat','Категории справочника (телефоны, графики смен…)']];
+let items=[],notes=[],tab='kb',catFilter='',noteEditId=null,formSnap='',noteSnap='',setSnap='',lineFilter='',editId=null,curPhotos=[],photoJobs=Promise.resolve(),db=null;
+let lists={line:[],station:[],equip:[],symptom:[],cause:[],solution:[],ncat:['Телефоны','Графики смен','Контакты','Инструкции']};
+let plan=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nat=(a,b)=>String(a).localeCompare(String(b),'ru',{numeric:true,sensitivity:'base'});
+const br=s=>esc(s).replace(/\n/g,'<br>');
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',2600)}
+function ask(text,yes='Удалить'){return new Promise(res=>{$('askText').textContent=text;$('askYes').textContent=yes;const d=$('ask');
+  const done=v=>{d.close();res(v)};$('askYes').onclick=()=>done(true);$('askNo').onclick=()=>done(false);d.showModal()})}
+
+/* ---- хранилище (IndexedDB) ---- */
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open('nalad_kb',3);
+  r.onupgradeneeded=()=>{const d=r.result;
+    if(!d.objectStoreNames.contains('items'))d.createObjectStore('items',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'k'});
+    if(!d.objectStoreNames.contains('notes'))d.createObjectStore('notes',{keyPath:'id'})};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}})}
+const idbAll=(st='items')=>new Promise(res=>{try{const q=db.transaction(st).objectStore(st).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])}catch(e){res([])}});
+const idbPut=(it,st='items')=>new Promise(res=>{if(!db)return res(false);try{const t=db.transaction(st,'readwrite');t.objectStore(st).put(it);t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>res(false)}catch(e){res(false)}});
+const idbDel=(id,st='items')=>new Promise(res=>{if(!db)return res(false);try{const t=db.transaction(st,'readwrite');t.objectStore(st).delete(id);t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>res(false)}catch(e){res(false)}});
+const metaGet=k=>new Promise(res=>{if(!db)return res(null);try{const q=db.transaction('meta').objectStore('meta').get(k);q.onsuccess=()=>res(q.result?q.result.v:null);q.onerror=()=>res(null)}catch(e){res(null)}});
+const metaPut=(k,v)=>new Promise(res=>{if(!db)return res(false);try{const t=db.transaction('meta','readwrite');t.objectStore('meta').put({k,v});t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>res(false)}catch(e){res(false)}});
+
+/* ---- выпадающие списки ---- */
+function options(f){const m=new Map();const add=v=>{v=String(v||'').trim();if(v&&!m.has(v.toLowerCase()))m.set(v.toLowerCase(),v)};
+  (lists[f]||[]).forEach(add);if(f==='ncat')notes.forEach(n=>add(n.cat));else items.forEach(i=>add(i[f]));return [...m.values()].sort(nat)}
+function combo(id,field){
+  const el=$(id),wrap=document.createElement('div');wrap.className='cb';
+  el.parentNode.insertBefore(wrap,el);wrap.appendChild(el);el.classList.add('has-dd');
+  const btn=document.createElement('button');btn.type='button';btn.className='dd-btn';btn.textContent='▾';btn.setAttribute('aria-label','Список');wrap.appendChild(btn);
+  const panel=document.createElement('div');panel.className='dd';wrap.appendChild(panel);
+  let timer;
+  const hide=()=>{panel.style.display='none'};
+  const show=all=>{clearTimeout(timer);const v=el.value.trim().toLowerCase();let o=options(field);
+    if(!all&&v)o=o.filter(x=>x.toLowerCase().includes(v));
+    panel.innerHTML=o.length?o.map(x=>`<div class="opt" data-v="${esc(x)}">${esc(x)}</div>`).join(''):'<div class="opt none">Нет вариантов. Впишите свой или добавьте в ⚙ Настройках</div>';
+    panel.style.display='block'};
+  el.addEventListener('focus',()=>show(false));
+  el.addEventListener('click',()=>show(false));
+  el.addEventListener('input',()=>show(false));
+  el.addEventListener('blur',()=>{timer=setTimeout(hide,200)});
+  btn.addEventListener('mousedown',e=>e.preventDefault());
+  btn.addEventListener('click',()=>{if(panel.style.display==='block'){hide()}else{el.focus();show(true)}});
+  panel.addEventListener('mousedown',e=>e.preventDefault());
+  panel.addEventListener('click',e=>{const o=e.target.closest('[data-v]');if(!o)return;el.value=o.dataset.v;hide();el.dispatchEvent(new Event('change'))});
+}
+
+/* ---- фото ---- */
+function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const m=1280,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(im.width*s));c.height=Math.max(1,Math.round(im.height*s));
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.72))};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej()};im.src=url})}
+function renderFormPhotos(){const h=curPhotos.map((p,k)=>`<div class="t"><img src="${p}" data-v="${k}"><button class="x" data-x="${k}" type="button">×</button></div>`).join('');$('formPhotos').innerHTML=h;$('nPhotos').innerHTML=h}
+$('addPhoto').onclick=()=>$('photoInput').click();
+$('photoInput').onchange=e=>{
+  const files=[...e.target.files];e.target.value='';if(!files.length)return;
+  toast('Обработка фото…');
+  photoJobs=photoJobs.then(async()=>{let n=0;for(const f of files){try{curPhotos.push(await shrink(f));n++}catch(_){}}
+    renderFormPhotos();toast(n?`Добавлено фото: ${n}`:'Не удалось прочитать фото')});
+};
+const photoClick=e=>{
+  const x=e.target.closest('[data-x]');if(x){curPhotos.splice(+x.dataset.x,1);renderFormPhotos();return}
+  const v=e.target.closest('[data-v]');if(v)showPhoto(curPhotos[+v.dataset.v]);
+};
+$('formPhotos').onclick=photoClick;$('nPhotos').onclick=photoClick;
+$('nAddPhoto').onclick=()=>$('photoInput').click();
+function showPhoto(src){$('vimg').src=src;$('viewer').showModal()}
+$('viewer').onclick=()=>$('viewer').close();
+
+/* ---- отрисовка базы ---- */
+function render(){tab==='info'?renderInfo():renderKb()}
+function renderKb(){
+  const q=$('q').value.trim().toLowerCase();
+  const ls=[...new Set(items.map(i=>i.line))].sort(nat);
+  if(lineFilter&&!ls.includes(lineFilter))lineFilter='';
+  $('chips').innerHTML=['',...ls].map(l=>`<button class="chip ${l===lineFilter?'on':''}" data-l="${esc(l)}">${l?esc(l):'Все'}</button>`).join('');
+  const data=items.filter(i=>(!lineFilter||i.line===lineFilter)&&(!q||[i.line,i.station,i.equip,i.symptom,i.cause,i.solution,i.comment].join(' ').toLowerCase().includes(q)));
+  if(!data.length){$('list').innerHTML=`<div class="empty">${items.length?'Ничего не найдено':'База пуста.<br>Нажмите «+», чтобы добавить первую запись.'}</div>`;return}
+  const tree={};data.forEach(i=>{((tree[i.line]??={})[i.station]??=[]).push(i)});
+  const open=q?'open':'';
+  $('list').innerHTML=Object.keys(tree).sort(nat).map(l=>{
+    const sts=tree[l],total=Object.values(sts).reduce((a,b)=>a+b.length,0);
+    return `<details class="ln" ${open||(lineFilter?'open':'')}><summary>${esc(l)} <span class="cnt">· ${total}</span></summary>`+
+    Object.keys(sts).sort(nat).map(s=>`<details class="st" ${open}><summary>Станция ${esc(s)} <span class="cnt">· ${sts[s].length}</span></summary>`+
+      sts[s].sort((a,b)=>b.updated-a.updated).map(card).join('')+`</details>`).join('')+`</details>`}).join('');
+}
+function card(i){return `<div class="card">
+  ${i.equip?`<span class="tag">${esc(i.equip)}</span>`:''}
+  <div class="row"><b>Симптом</b>${br(i.symptom)}</div>
+  ${i.cause?`<div class="row"><b>Причина</b>${br(i.cause)}</div>`:''}
+  ${i.solution?`<div class="row"><b>Решение</b>${br(i.solution)}</div>`:''}
+  ${i.comment?`<div class="row"><b>Комментарии</b>${br(i.comment)}</div>`:''}
+  ${(i.photos&&i.photos.length)?`<div class="ph">${i.photos.map((p,k)=>`<div class="t"><img loading="lazy" src="${p}" data-p="${i.id}:${k}"></div>`).join('')}</div>`:''}
+  <div class="act"><button class="ghost" data-e="${i.id}">Изменить</button><button class="danger ghost" data-d="${i.id}">Удалить</button></div></div>`}
+
+/* ---- форма записи ---- */
+function openForm(it){
+  editId=it?it.id:null;$('ft').textContent=it?'Изменить запись':'Новая запись';
+  $('quick').value='';
+  $('line').value=it?.line??(lineFilter||'');$('station').value=it?.station??'';$('equip').value=it?.equip??'';
+  $('symptom').value=it?.symptom??'';$('cause').value=it?.cause??'';$('solution').value=it?.solution??'';$('comment').value=it?.comment??'';
+  curPhotos=[...(it?.photos||[])];renderFormPhotos();
+  $('form').showModal();
+  document.querySelectorAll('#form .dd').forEach(p=>p.style.display='none');
+  formSnap=formState();
+}
+const formState=()=>JSON.stringify(['quick','line','station','equip','symptom','cause','solution','comment'].map(i=>$(i).value).concat(curPhotos.length));
+function parseQuick(){
+  const parts=$('quick').value.split(/\s+[-–—]\s+/).map(s=>s.trim());
+  if(parts.length<2){toast('Разделяйте части « - » (пробел, дефис, пробел)');return}
+  const cut=s=>(s||'').replace(/\([^)]*\)\s*$/,'').trim();
+  const head=parts[0].replace(/\([^)]*\)/g,' ').trim().split(/\s+/);
+  $('line').value=(head[0]||'').toUpperCase();$('station').value=head[1]||'';$('equip').value=head.slice(2).join(' ').toUpperCase();
+  $('symptom').value=cut(parts[1]);$('cause').value=cut(parts[2]);$('solution').value=cut(parts.slice(3).join(' - '));
+}
+async function save(){
+  await photoJobs;
+  const rec={line:$('line').value.trim().toUpperCase(),station:$('station').value.trim(),equip:$('equip').value.trim(),
+    symptom:$('symptom').value.trim(),cause:$('cause').value.trim(),solution:$('solution').value.trim(),
+    comment:$('comment').value.trim(),photos:[...curPhotos],updated:Date.now()};
+  if(!rec.line){toast('Укажите линию');$('line').focus();return}
+  if(!rec.station){toast('Укажите станцию');$('station').focus();return}
+  if(!rec.symptom){toast('Опишите симптом');$('symptom').focus();return}
+  let item;
+  if(editId){item=items.find(x=>x.id===editId);Object.assign(item,rec)}
+  else{item={id:uid(),created:Date.now(),...rec};items.push(item)}
+  const ok=await idbPut(item);
+  $('form').close();render();
+  toast(ok?'Сохранено':'Сохранено только до закрытия страницы');
+}
+$('save').onclick=save;
+$('add').onclick=()=>tab==='info'?openNote():openForm();
+$('cancel').onclick=()=>$('form').close();
+$('parse').onclick=parseQuick;
+$('q').oninput=render;
+$('chips').onclick=e=>{const b=e.target.closest('[data-l]');if(b){if(tab==='info')catFilter=b.dataset.l;else lineFilter=b.dataset.l;render()}};
+$('list').onclick=async e=>{
+  const ed=e.target.closest('[data-e]'),de=e.target.closest('[data-d]'),ph=e.target.closest('[data-p]');
+  if(ed)openForm(items.find(i=>i.id===ed.dataset.e));
+  if(de&&await ask('Удалить запись?')){items=items.filter(i=>i.id!==de.dataset.d);await idbDel(de.dataset.d);render();toast('Удалено')}
+  const ne=e.target.closest('[data-ne]'),nd=e.target.closest('[data-nd]');
+  if(ne)openNote(notes.find(n=>n.id===ne.dataset.ne));
+  if(nd&&await ask('Удалить заметку?')){notes=notes.filter(n=>n.id!==nd.dataset.nd);await idbDel(nd.dataset.nd,'notes');render();toast('Удалено')}
+  if(ph){const[id,k]=ph.dataset.p.split(':');const it=items.find(i=>i.id===id)||notes.find(i=>i.id===id);if(it)showPhoto(it.photos[+k])}
+};
+
+/* ---- настройки (списки) ---- */
+$('setBtn').onclick=()=>{
+  $('setBody').innerHTML=LISTS.map(([k,t])=>`<label>${t}</label><textarea data-k="${k}" style="min-height:84px" placeholder="по одному в строке">${esc((lists[k]||[]).join('\n'))}</textarea>`).join('');
+  $('settings').showModal();
+  setSnap=setState();
+};
+const setState=()=>[...document.querySelectorAll('#setBody textarea')].map(t=>t.value).join('\u0001');
+$('setCancel').onclick=()=>$('settings').close();
+$('setSave').onclick=async()=>{
+  document.querySelectorAll('#setBody textarea').forEach(t=>{
+    const seen=new Set(),out=[];
+    t.value.split('\n').forEach(s=>{s=s.trim();if(k_(t)==='line')s=s.toUpperCase();if(s&&!seen.has(s.toLowerCase())){seen.add(s.toLowerCase());out.push(s)}});
+    lists[k_(t)]=out});
+  const ok=await metaPut('lists',lists);
+  $('settings').close();toast(ok?'Настройки сохранены':'Настройки действуют до закрытия страницы');
+};
+const k_=t=>t.dataset.k;
+
+/* ---- выпуск за смену ---- */
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function newPlan(){return{date:todayISO(),periods:[],leads:[10],enabled:true,fired:{}}}
+plan=newPlan();
+const toMin=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?(+m[1])*60+(+m[2]):null};
+const fmtMin=m=>{m=((m%1440)+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
+const fmtDate=d=>{const[y,m,dd]=String(d).split('-');return`${dd}.${m}.${y}`};
+function atMin(min){const[y,m,d]=plan.date.split('-').map(Number);return new Date(y,m-1,d,0,min,0,0).getTime()}
+/* абсолютные времена периодов (поддерживает ночную смену через полночь) */
+function computeSchedule(){
+  let off=0,prevS=null;
+  return plan.periods.map((p,i)=>{
+    const sm=toMin(p.s),em=toMin(p.e);if(sm==null||em==null)return null;
+    let s=sm+off*1440;if(prevS!=null&&s<prevS){off++;s+=1440}
+    let e=em+off*1440;if(e<=s){off++;e+=1440}
+    prevS=s;return{i,id:p.id,s:p.s,e:p.e,startAt:atMin(s),endAt:atMin(e)};
+  });
+}
+const fk=(p,n)=>`${p.id}|${plan.date}|${n}`;
+const planTotal=()=>plan.periods.reduce((a,p)=>a+(+p.qty||0),0);
+let saveT;function savePlanSoon(){clearTimeout(saveT);saveT=setTimeout(()=>{metaPut('plan',plan);pushNative()},400)}
+
+function renderPlan(){
+  $('pDate').value=plan.date;$('pEn').checked=!!plan.enabled;renderNotifStatus();
+  $('pLeads').innerHTML=[5,10,15,30].map(n=>`<button type="button" class="chip ${plan.leads.includes(n)?'on':''}" data-n="${n}">${n} мин</button>`).join('');
+  $('pRows').innerHTML=plan.periods.map((p,i)=>`<div class="pr" data-i="${i}">
+    <div class="pr1"><input type="checkbox" data-f="sel" ${p.sel?'checked':''} aria-label="Выбрать"><input type="time" data-f="s" value="${esc(p.s)}"><span>–</span><input type="time" data-f="e" value="${esc(p.e)}"><button type="button" class="x2" data-del="${i}" aria-label="Удалить">×</button></div>
+    <div class="pr2"><span class="lb">Выпуск</span><input type="number" inputmode="numeric" min="0" data-f="qty" value="${p.qty===''||p.qty==null?'':esc(p.qty)}" placeholder="шт"><div class="cum">Всего: <b data-c="${i}">0</b></div></div></div>`).join('')
+    ||'<div class="empty">Периодов пока нет.<br>Нажмите «+ Период» или «Быстро создать периоды».</div>';
+  recalc();
+}
+function recalc(){
+  let sum=0,sel=0,selN=0;
+  plan.periods.forEach((p,i)=>{const q=+p.qty||0;sum+=q;if(p.sel){sel+=q;selN++}const c=document.querySelector(`[data-c="${i}"]`);if(c)c.textContent=sum});
+  $('pTotal').textContent=sum;
+  $('pSel').textContent=selN?`Выбрано периодов: ${selN} → сумма ${sel}`:(plan.periods.length?'Отметьте галочками периоды — покажу их общую сумму':'');
+}
+$('pRows').addEventListener('input',e=>{
+  const row=e.target.closest('.pr');if(!row)return;const p=plan.periods[+row.dataset.i],f=e.target.dataset.f;if(!p||!f)return;
+  if(f==='qty')p.qty=e.target.value===''?'':Math.max(0,+e.target.value);
+  else if(f==='sel')p.sel=e.target.checked;
+  else{p[f]=e.target.value;Object.keys(plan.fired).forEach(k=>{if(k.startsWith(p.id+'|'))delete plan.fired[k]})}
+  recalc();savePlanSoon();
+});
+$('pRows').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d){plan.periods.splice(+d.dataset.del,1);renderPlan();savePlanSoon()}});
+$('pLeads').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;const n=+b.dataset.n,i=plan.leads.indexOf(n);
+  if(i>=0)plan.leads.splice(i,1);else plan.leads.push(n);plan.leads.sort((a,b)=>a-b);renderPlan();savePlanSoon()};
+$('pEn').onchange=e=>{plan.enabled=e.target.checked;if(plan.enabled)askPerms();savePlanSoon();renderNotifStatus()};
+$('pDate').onchange=e=>{if(e.target.value){plan.date=e.target.value;plan.fired={};savePlanSoon()}};
+$('pAdd').onclick=()=>{
+  const last=plan.periods[plan.periods.length-1];let s='06:00',e='07:00';
+  if(last){const a=toMin(last.s),b=toMin(last.e);let len=(a!=null&&b!=null)?((b-a+1440)%1440||60):60;s=last.e;e=fmtMin((toMin(s)??0)+len)}
+  plan.periods.push({id:uid(),s,e,qty:'',sel:false});renderPlan();savePlanSoon();
+  const rows=document.querySelectorAll('#pRows .pr');if(rows.length)rows[rows.length-1].scrollIntoView({block:'center'});
+};
+$('gMake').onclick=async()=>{
+  const st=toMin($('gStart').value),len=Math.max(1,+$('gLen').value||60),cnt=Math.min(48,Math.max(1,+$('gCnt').value||1));
+  if(st==null){toast('Укажите начало смены');return}
+  if(plan.periods.length&&!await ask('Заменить текущие периоды и количества?','Заменить'))return;
+  plan.periods=Array.from({length:cnt},(_,k)=>({id:uid(),s:fmtMin(st+k*len),e:fmtMin(st+(k+1)*len),qty:'',sel:false}));
+  plan.fired={};renderPlan();savePlanSoon();toast('Периоды созданы');
+};
+$('pNew').onclick=async()=>{
+  if(!await ask('Начать новую смену? Количества и отметки будут очищены, периоды останутся.','Очистить'))return;
+  plan.periods.forEach(p=>{p.qty='';p.sel=false});plan.fired={};plan.date=todayISO();renderPlan();savePlanSoon();toast('Новая смена');
+};
+function summary(){
+  let sum=0,sel=0,selN=0;
+  const lines=plan.periods.map(p=>{const q=+p.qty||0;sum+=q;if(p.sel){sel+=q;selN++}
+    return`${p.s}–${p.e}: ${p.qty===''||p.qty==null?'—':p.qty} (всего ${sum})`});
+  return`Выпуск, смена ${fmtDate(plan.date)}\n`+lines.join('\n')+`\nИтого за смену: ${sum}`+(selN?`\nСумма выбранных периодов (${selN}): ${sel}`:'');
+}
+$('pShare').onclick=()=>{
+  if(!plan.periods.length){toast('Нет периодов');return}
+  const text=summary();
+  if(window.AndroidBridge&&AndroidBridge.shareText){AndroidBridge.shareText(text);return}
+  if(navigator.share){navigator.share({text}).catch(()=>{});return}
+  try{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('Сводка скопирована')}catch(_){toast('Не удалось скопировать')}
+};
+$('prodBtn').onclick=()=>{renderPlan();$('prod').showModal();askNativePerms()};
+$('prodClose').onclick=()=>$('prod').close();
+
+/* ---- оповещения ---- */
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext,c=new C(),o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.2;o.start();o.stop(c.currentTime+.4)}catch(_){}}
+function showAlert(lines){
+  const el=$('alertText');el.textContent=($('alertDlg').open?el.textContent+'\n\n':'')+lines.join('\n\n');
+  if(!$('alertDlg').open)$('alertDlg').showModal();
+  beep();try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(_){}
+}
+$('alertOk').onclick=()=>$('alertDlg').close();
+function tick(){
+  if(!plan.enabled||!plan.leads.length)return;
+  const now=Date.now(),msgs=[],notes_=[];let changed=false;
+  computeSchedule().forEach(p=>{
+    if(!p||now>=p.endAt)return;
+    const due=plan.leads.filter(n=>now>=p.endAt-n*MIN).sort((a,b)=>a-b);
+    const fresh=due.filter(n=>!plan.fired[fk(p,n)]);
+    if(fresh.length){fresh.forEach(n=>plan.fired[fk(p,n)]=1);changed=true;
+      const left=Math.max(1,Math.ceil((p.endAt-now)/MIN));
+      msgs.push(`Период ${p.s}–${p.e}: до конца ~${left} мин.\nВнесите выпуск и сообщите диспетчеру (сейчас всего: ${planTotal()}).`);
+      notes_.push({t:`Выпуск: до конца периода ~${left} мин`,b:`Период ${p.s}–${p.e}. Внесите выпуск и сообщите диспетчеру. Сейчас всего: ${planTotal()}`,tag:`${p.id}|${plan.date}`})}
+  });
+  if(changed){metaPut('plan',plan);pushNative();if(msgs.length){renderIfProd();
+    /* Браузер: уведомление в шторку системы; приложение (APK): его шлёт Android через AlarmManager */
+    if(!isNative())notes_.forEach(n=>systemNotify(n.t,n.b,n.tag));
+    /* Окно внутри страницы — только если пользователь сейчас смотрит на неё */
+    if(!document.hidden)showAlert(msgs)}}
+}
+/* ---- Web Notifications (браузер ПК / Android Chrome) ---- */
+const webNotifSupported=()=>'Notification' in window;
+/* Android Chrome НЕ разрешает new Notification() — только через Service Worker (showNotification).
+   Поэтому: сначала Service Worker (sw.js), если его нет — обычный конструктор (подходит для ПК). */
+async function systemNotify(title,body,tag){
+  if(!webNotifSupported()||Notification.permission!=='granted')return false;
+  const opts={body,tag:tag||'nalad',renotify:true,requireInteraction:true,vibrate:[300,150,300]};
+  try{
+    const reg=('serviceWorker' in navigator)?await navigator.serviceWorker.getRegistration():null;
+    if(reg){await reg.showNotification(title,opts);return true}
+  }catch(_){}
+  try{const n=new Notification(title,opts);n.onclick=()=>{try{window.focus()}catch(_){}n.close()};return true}catch(_){return false}
+}
+/* запрос разрешения: обязательно по нажатию пользователя */
+function askWebPerms(){
+  if(!webNotifSupported()||!window.isSecureContext||Notification.permission!=='default')return Promise.resolve(Notification.permission);
+  try{
+    const r=Notification.requestPermission(r2=>{});   /* старые браузеры используют callback */
+    return Promise.resolve(r).then(p=>{renderNotifStatus();return p});
+  }catch(_){return Promise.resolve(Notification.permission)}
+}
+/* универсально: в APK — нативные разрешения, в браузере — Notification.requestPermission() */
+function askPerms(){return isNative()?(askNativePerms(),Promise.resolve('native')):askWebPerms()}
+function notifStatusText(){
+  if(isNative())return 'Приложение: уведомления отправляет Android, работают в фоне и при заблокированном экране.';
+  if(!webNotifSupported())return 'Этот браузер не поддерживает уведомления.';
+  if(!window.isSecureContext)return 'Уведомления браузера работают только по https:// или localhost (не по file://).';
+  const p=Notification.permission;
+  return p==='granted'?'Уведомления браузера включены (приходят, пока страница открыта или свёрнута в браузере).'
+    :p==='denied'?'Уведомления заблокированы: разрешите их в настройках сайта в браузере.'
+    :'Разрешение ещё не выдано: нажмите «Проверить уведомление» и выберите «Разрешить».';
+}
+function renderNotifStatus(){const el=$('pNotif');if(el)el.textContent=notifStatusText()}
+$('pTest').onclick=async()=>{
+  if(isNative()){
+    askNativePerms();
+    pushNative([{at:Date.now()+5000,title:'Проверка уведомления',text:'Если вы видите это в шторке — всё работает.'}]);
+    toast('Уведомление придёт через 5 сек. Сверните приложение.');return;
+  }
+  const p=await askWebPerms();renderNotifStatus();
+  if(p!=='granted'){toast(webNotifSupported()?'Разрешение не выдано':'Уведомления не поддерживаются');return}
+  toast('Уведомление придёт через 5 сек. Сверните вкладку.');
+  setTimeout(async()=>{if(!await systemNotify('Проверка уведомления','Если вы видите это в шторке — всё работает.','test'))toast('Не удалось показать уведомление')},5000);
+};
+const renderIfProd=()=>{if($('prod').open)renderPlan()};
+/* запрос разрешений (уведомления Android 13+, точные будильники Android 12+) */
+function askNativePerms(){try{if(window.AndroidBridge&&AndroidBridge.requestPermissions)AndroidBridge.requestPermissions()}catch(_){}}
+/* отправка расписания в нативный AlarmManager: полный список заменяет прежний.
+   Пустой список = все нативные оповещения отменены */
+function pushNative(extra){
+  if(!isNative())return;
+  const list=Array.isArray(extra)?[...extra]:[],now=Date.now(),total=planTotal();
+  if(plan.enabled)computeSchedule().forEach(p=>{if(!p)return;plan.leads.forEach(n=>{
+    const at=p.endAt-n*MIN;if(at>now&&!plan.fired[fk(p,n)])list.push({at,title:`Выпуск: до конца периода ${n} мин`,text:`Период ${p.s}–${p.e}. Внесите выпуск и сообщите диспетчеру. Сейчас всего: ${total}`})})});
+  list.sort((a,b)=>a.at-b.at);
+  try{AndroidBridge.scheduleAlerts(JSON.stringify(list.slice(0,60)))}catch(_){}
+}
+setInterval(tick,15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
+window.addEventListener('focus',tick);
+
+/* ---- экспорт / импорт ---- */
+function download(name,text,type){
+  if(window.AndroidBridge&&AndroidBridge.saveFile){AndroidBridge.saveFile(name,type,text);return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+const stamp=()=>new Date().toISOString().slice(0,10);
+$('menuBtn').onclick=()=>$('menu').showModal();
+$('closeMenu').onclick=()=>$('menu').close();
+$('expJson').onclick=()=>download(`baza-naladchika-${stamp()}.json`,JSON.stringify({app:'nalad',v:3,items,notes,lists,plan}),'application/json');
+$('expCsv').onclick=()=>{
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const rows=[['Линия','Станция','Оборудование','Симптом','Причина','Решение','Комментарии','Фото, шт'],
+    ...[...items].sort((a,b)=>nat(a.line,b.line)||nat(a.station,b.station)).map(i=>[i.line,i.station,i.equip,i.symptom,i.cause,i.solution,i.comment,(i.photos||[]).length])];
+  download(`baza-naladchika-${stamp()}.csv`,'﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv');
+};
+$('impBtn').onclick=()=>$('impFile').click();
+$('impFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{let d=JSON.parse(await f.text());let extra={};
+    if(!Array.isArray(d)){if(!d||!Array.isArray(d.items))throw 0;extra=d;d=d.items}
+    const ids=new Set(items.map(i=>i.id));let n=0;
+    for(const i of d){if(i&&i.id&&i.line&&i.station&&i.symptom&&!ids.has(i.id)){i.photos=i.photos||[];i.updated=i.updated||Date.now();items.push(i);await idbPut(i);n++}}
+    if(Array.isArray(extra.notes)){const nid=new Set(notes.map(x=>x.id));for(const x of extra.notes){if(x&&x.id&&x.title&&!nid.has(x.id)){x.photos=x.photos||[];x.updated=x.updated||Date.now();notes.push(x);await idbPut(x,'notes')}}}
+    if(extra.lists){LISTS.forEach(([k])=>{const m=new Map();[...(lists[k]||[]),...(extra.lists[k]||[])].forEach(v=>{v=String(v).trim();if(v&&!m.has(v.toLowerCase()))m.set(v.toLowerCase(),v)});lists[k]=[...m.values()]});await metaPut('lists',lists)}
+    if(extra.plan&&Array.isArray(extra.plan.periods)&&!plan.periods.length){plan=Object.assign(newPlan(),extra.plan);await metaPut('plan',plan);pushNative()}
+    render();$('menu').close();toast('Добавлено записей: '+n);
+  }catch(_){toast('Файл не похож на резервную копию')}
+};
+
+
+/* ---- справочник (телефоны, графики, любая ключевая информация) ---- */
+function linkify(text){
+  return esc(text).replace(/\+?\d[\d\s().-]{5,}\d/g,m=>{
+    const d=m.replace(/\D/g,'');
+    if(d.length<7||d.length>15||/^\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}$/.test(m.trim()))return m;
+    return `<a href="tel:${(m.trim().startsWith('+')?'+':'')+d}">${m}</a>`}).replace(/\n/g,'<br>');
+}
+function renderInfo(){
+  const q=$('q').value.trim().toLowerCase();
+  const cats=[...new Set(notes.map(n=>n.cat||'Без категории'))].sort(nat);
+  if(catFilter&&!cats.includes(catFilter))catFilter='';
+  $('chips').innerHTML=['',...cats].map(c=>`<button class="chip ${c===catFilter?'on':''}" data-l="${esc(c)}">${c?esc(c):'Все'}</button>`).join('');
+  const data=notes.filter(n=>(!catFilter||(n.cat||'Без категории')===catFilter)&&(!q||[n.cat,n.title,n.text].join(' ').toLowerCase().includes(q)));
+  if(!data.length){$('list').innerHTML=`<div class="empty">${notes.length?'Ничего не найдено':'Справочник пуст.<br>Нажмите «+», чтобы сохранить номер телефона, график смен или другую важную информацию.'}</div>`;return}
+  const tree={};data.forEach(n=>{(tree[n.cat||'Без категории']??=[]).push(n)});
+  $('list').innerHTML=Object.keys(tree).sort(nat).map(c=>`<details class="ln" open><summary>${esc(c)} <span class="cnt">· ${tree[c].length}</span></summary>`+
+    tree[c].sort((a,b)=>nat(a.title,b.title)).map(noteCard).join('')+`</details>`).join('');
+}
+function noteCard(n){return `<div class="card">
+  <div class="ntitle">${esc(n.title)}</div>
+  ${n.text?`<div class="ntext">${linkify(n.text)}</div>`:''}
+  ${(n.photos&&n.photos.length)?`<div class="ph">${n.photos.map((p,k)=>`<div class="t"><img loading="lazy" src="${p}" data-p="${n.id}:${k}"></div>`).join('')}</div>`:''}
+  <div class="act"><button class="ghost" data-ne="${n.id}">Изменить</button><button class="danger ghost" data-nd="${n.id}">Удалить</button></div></div>`}
+const noteState=()=>JSON.stringify([$('ncat').value,$('ntitle').value,$('ntext').value,curPhotos.length]);
+function openNote(n){
+  noteEditId=n?n.id:null;$('nt').textContent=n?'Изменить заметку':'Новая заметка';
+  $('ncat').value=n?.cat??(catFilter||'');$('ntitle').value=n?.title??'';$('ntext').value=n?.text??'';
+  curPhotos=[...(n?.photos||[])];renderFormPhotos();
+  $('note').showModal();
+  document.querySelectorAll('#note .dd').forEach(p=>p.style.display='none');
+  noteSnap=noteState();
+}
+async function saveNote(){
+  await photoJobs;
+  const rec={cat:$('ncat').value.trim(),title:$('ntitle').value.trim(),text:$('ntext').value.trim(),photos:[...curPhotos],updated:Date.now()};
+  if(!rec.title){toast('Укажите заголовок');$('ntitle').focus();return}
+  let it;
+  if(noteEditId){it=notes.find(x=>x.id===noteEditId);Object.assign(it,rec)}
+  else{it={id:uid(),created:Date.now(),...rec};notes.push(it)}
+  const ok=await idbPut(it,'notes');
+  $('note').close();render();toast(ok?'Сохранено':'Сохранено только до закрытия страницы');
+}
+$('nSave').onclick=saveNote;
+$('nCancel').onclick=()=>$('note').close();
+function setTab(t){
+  tab=t;$('tabKb').classList.toggle('on',t==='kb');$('tabInfo').classList.toggle('on',t==='info');
+  $('q').placeholder=t==='info'?'Поиск: имя, телефон, график…':'Поиск: симптом, станция, робот, решение…';
+  $('add').setAttribute('aria-label',t==='info'?'Добавить заметку':'Добавить запись');render();
+}
+$('tabKb').onclick=()=>setTab('kb');$('tabInfo').onclick=()=>setTab('info');
+
+/* ---- закрытие окон тапом по свободному полю ---- */
+const outside=(d,e)=>{const r=d.getBoundingClientRect();return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom};
+function closeOnOutside(id,dirty){
+  const d=$(id);let down=false;
+  d.addEventListener('pointerdown',e=>{down=outside(d,e)});
+  d.addEventListener('click',async e=>{
+    if(!down||!outside(d,e))return;down=false;
+    if(dirty&&dirty()&&!await ask('Закрыть без сохранения?','Закрыть'))return;
+    d.close()});
+}
+closeOnOutside('form',()=>formState()!==formSnap);
+closeOnOutside('note',()=>noteState()!==noteSnap);
+closeOnOutside('settings',()=>setState()!==setSnap);
+closeOnOutside('prod');closeOnOutside('menu');
+
+/* ---- старт ---- */
+(async()=>{
+  ['line','station','equip','symptom','cause','solution'].forEach(f=>combo(f,f));
+  combo('ncat','ncat');
+  db=await openDB();
+  if(db){
+    items=await idbAll();notes=await idbAll('notes');
+    const L=await metaGet('lists');if(L)LISTS.forEach(([k])=>{if(Array.isArray(L[k]))lists[k]=L[k]});
+    const P=await metaGet('plan');if(P&&Array.isArray(P.periods))plan=Object.assign(newPlan(),P);
+    try{const old=JSON.parse(localStorage.getItem(OLDKEY)||'[]');const ids=new Set(items.map(i=>i.id));
+      for(const i of old){if(i&&i.id&&!ids.has(i.id)){i.photos=[];items.push(i);await idbPut(i)}}
+      if(old.length)localStorage.removeItem(OLDKEY)}catch(_){}
+  }else $('warn').style.display='block';
+  /* Service Worker нужен Android Chrome для показа уведомлений в шторке (файл sw.js рядом с index.html, только https/localhost) */
+  if(!isNative()&&'serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  render();pushNative();tick();renderNotifStatus();
+})();
+</script>
+</body>
+</html>
